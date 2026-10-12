@@ -1,0 +1,18 @@
+{
+  // TypeScript is only used to CHECK the code (`npm run typecheck`).
+  // Node runs the .ts files directly by stripping the types, so nothing is compiled or emitted.
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "nodenext",            // Node's ES module rules: import paths need their file extension
+    "types": ["node"],
+    "strict": true,                  // the type-safety switches: null checks, no implicit any, etc.
+    "noEmit": true,                  // check only, never write .js files
+    "allowImportingTsExtensions": true, // write `import ... from './browser.ts'`, as Node requires
+    "erasableSyntaxOnly": true,      // forbid TS features Node can't strip (enum, namespace, constructor parameter properties)
+    "verbatimModuleSyntax": true,    // type-only imports must say `import type`, so stripping them is safe
+    "noUncheckedIndexedAccess": true, // array[i] might be undefined; make us handle it
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}

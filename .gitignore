@@ -1,0 +1,45 @@
+# Dependencies (recreated by `npm install`)
+node_modules/
+
+# Saved browser logins: storageState files hold real session cookies and tokens
+.ensemble/
+.auth/
+*.storage.json
+
+# Secrets
+.env
+.env.*
+!.env.example
+index.ts
+# Playwright output: screenshots, traces, videos, reports
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+*.png
+*.webm
+*.zip
+
+# Build output (nothing is emitted today, but in case tsc or a bundler is added)
+dist/
+build/
+*.tsbuildinfo
+
+# Logs and debug output
+*.log
+npm-debug.log*
+
+# Scratch files from experiments
+*.tmp.*
+tmp/
+
+# Editors: keep the shared debug setup, ignore personal settings
+.vscode/*
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini

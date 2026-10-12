@@ -1,0 +1,74 @@
+name: Release
+
+# Publishes to npm when a version tag is pushed.
+#
+# Authentication is npm trusted publishing (OIDC): no NPM_TOKEN secret, no
+# long-lived credential to leak, and provenance is attached automatically.
+# It requires a one-time setup on npmjs.com (see the Release section of the
+# README), and that setup can only be done once the package exists, so the
+# first publish is done locally.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for OIDC trusted publishing
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Trusted publishing needs Node >= 22.14 and npm >= 11.5.1. The
+          # published package still supports Node 20; this is only the
+          # toolchain that builds and publishes it.
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm ci
+
+      # The tag is the release's claim about what is being published; if it
+      # disagrees with package.json, stop rather than publish the wrong version.
+      - name: Check the tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p 'require("./package.json").version')"
+          if [ "$tag" != "$pkg" ]; then
+            echo "Tag v$tag does not match package.json version $pkg" >&2
+            exit 1
+          fi
+          echo "Publishing version $pkg"
+
+      - run: npm run typecheck
+      - run: npm run build
+
+      # Fails loudly rather than silently publishing a half-built package.
+      - name: Check the build output is present
+        run: test -f dist/mcp/server.js && test -f dist/browser/registry.js
+
+      # A tag can be pushed for a version that is already on the registry,
+      # notably the first release, which is published from a workstation
+      # before trusted publishing can be configured. Re-publishing is an
+      # error, not a no-op, so check first and skip.
+      - name: Check whether this version is already published
+        id: published
+        run: |
+          name="$(node -p 'require("./package.json").name')"
+          version="$(node -p 'require("./package.json").version')"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "$name@$version is already on the registry; skipping publish."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # No NPM_TOKEN: with a trusted publisher configured, the runner proves
+      # its identity to the registry directly with a short-lived credential.
+      - if: steps.published.outputs.already == 'false'
+        run: npm publish --provenance

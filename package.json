@@ -1,0 +1,57 @@
+{
+  "name": "multi-role-browser",
+  "version": "0.1.0",
+  "description": "MCP server that lets AI agents drive several logged-in browser identities (admin, user, ...) side by side with Playwright",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "playwright",
+    "browser",
+    "testing",
+    "multi-user",
+    "rbac",
+    "claude"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/denver6000/multi-role-browser.git"
+  },
+  "homepage": "https://github.com/denver6000/multi-role-browser#readme",
+  "bugs": "https://github.com/denver6000/multi-role-browser/issues",
+  "type": "module",
+  "bin": {
+    "multi-role-browser": "dist/mcp/server.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "site": "node dummy-site/server.ts",
+    "start": "node index.ts",
+    "start:headless": "node index.ts --headless",
+    "debug": "node --inspect-brk index.ts",
+    "mcp": "node src/mcp/server.ts",
+    "demo:agent": "node src/mcp/demo-agent.ts",
+    "typecheck": "tsc",
+    "typecheck:watch": "tsc --watch",
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run typecheck && npm run build",
+    "browsers:install": "playwright install chromium"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "playwright": "^1.64.0",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}

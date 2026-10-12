@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "multi-role-browser": {
+      "command": "node",
+      "args": ["src/mcp/server.ts"],
+      "env": {
+        "BASE_URL": "http://localhost:3000"
+      }
+    }
+  }
+}

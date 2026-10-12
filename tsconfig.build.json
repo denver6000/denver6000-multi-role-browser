@@ -1,0 +1,14 @@
+{
+  // Compiles src/ to JavaScript in dist/ for publishing to npm (`npm run build`).
+  // Node can run .ts files directly, but not from inside node_modules, which is where
+  // npm installs packages, so the published package has to be plain JavaScript.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "rewriteRelativeImportExtensions": true // './registry.ts' becomes './registry.js' in the output
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/mcp/demo-agent.ts"]
+}
