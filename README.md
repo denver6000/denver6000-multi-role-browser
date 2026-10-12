@@ -91,7 +91,7 @@ If your second factor is an authenticator app rather than a passkey, `npm publis
 
 ### Then switch CI on (once)
 
-On npmjs.com, open the package > **Settings** > **Trusted Publisher** > **GitHub Actions**, and enter `denver6000`, `multi-role-browser` and the workflow file name `publish.yml`.
+On npmjs.com, open the package > **Settings** > **Trusted Publisher** > **GitHub Actions**, and enter `denver6000`, `denver6000-multi-role-browser` (the repository, not the package name) and the workflow file name `publish.yml`.
 
 ### Every release after that
 
