@@ -68,6 +68,16 @@ const userPanel = await call('browser_open', { actor: 'user', url: '/admin' });
 console.log('admin /admin:', /Title: .*/.exec(adminPanel)?.[0]);
 console.log('user  /admin:', /HTTP \d+/.exec(userPanel)?.[0], /Title: .*/.exec(userPanel)?.[0]);
 
+// In-app navigation: the button fetches data and swaps the page without a page load. The snapshot
+// browser_click returns must already show the new page, not the dashboard it started from.
+const dashboard = await call('browser_open', { actor: 'user', url: '/' });
+const profile = await call('browser_click', { actor: 'user', ref: findRef(dashboard, 'button', 'Open profile') });
+console.log('\nuser after "Open profile":', /URL: .*/.exec(profile)?.[0], /Title: .*/.exec(profile)?.[0]);
+if (!profile.includes('heading "Profile of Uma User"')) {
+  await client.close();
+  throw new Error(`browser_click returned before the in-app navigation finished:\n${profile}`);
+}
+
 // A mistake the agent can recover from: a stale ref comes back as an error result, not a crash.
 console.log('\nClicking a ref that does not exist:', await call('browser_click', { actor: 'user', ref: 'e999' }).catch(e => String(e)));
 

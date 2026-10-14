@@ -12,7 +12,9 @@
 //   POST /login     checks the form, sets an HttpOnly "sid" session cookie, redirects to /
 //   GET  /          dashboard (redirects to /login if not logged in); writes localStorage/sessionStorage
 //   GET  /admin     admin only (403 for other roles)
-//   GET  /api/me    the logged-in user as JSON (401 if not logged in)
+//   GET  /api/me    the logged-in user as JSON (401 if not logged in); ?delay=ms answers late
+//   GET  /profile   profile page; the dashboard's "Open profile" button also renders it in-app
+//                   (fetch + history.pushState, no page load), like a single-page app
 //   POST /logout    ends the session
 
 import http from 'node:http';
@@ -121,6 +123,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/me') {
+    // A slow API, so in-app navigation takes long enough for a test to catch a stale snapshot.
+    const delay = Math.min(Number(new URL(req.url ?? '/', 'http://x').searchParams.get('delay')) || 0, 5000);
+    if (delay) await new Promise(resolve => setTimeout(resolve, delay));
     return user ? json(res, 200, { name: user.name, email: user.email, role: user.role }) : json(res, 401, { error: 'not logged in' });
   }
 
@@ -134,13 +139,30 @@ const server = http.createServer(async (req, res) => {
       <nav>
         ${user.role === 'admin' ? '<a href="/admin">Admin panel</a>' : '<span class="hint">No admin access</span>'}
       </nav>
+      <button type="button" id="open-profile">Open profile</button>
       <form method="post" action="/logout"><button type="submit">Log out</button></form>
       <script>
+        // In-app navigation, as single-page apps (React Router, Inertia, ...) do it: fetch data,
+        // then swap the content and the URL without loading a new page.
+        document.getElementById('open-profile').addEventListener('click', async () => {
+          const me = await (await fetch('/api/me?delay=600')).json();
+          history.pushState({}, '', '/profile');
+          document.title = 'Profile';
+          document.body.innerHTML = '<h1>Profile of ' + me.name + '</h1><p>Email: ' + me.email + '</p><a href="/">Back to dashboard</a>';
+        });
+
         // Values for your scripts to read back with page.evaluate().
         localStorage.setItem('lastUser', ${JSON.stringify(user.email)});
         localStorage.setItem('theme', 'dark');
         sessionStorage.setItem('loginTime', new Date().toISOString());
       </script>`);
+  }
+
+  if (method === 'GET' && pathname === '/profile') {
+    return html(res, 200, 'Profile', `
+      <h1>Profile of ${user.name}</h1>
+      <p>Email: ${user.email}</p>
+      <a href="/">Back to dashboard</a>`);
   }
 
   if (method === 'GET' && pathname === '/admin') {

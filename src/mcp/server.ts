@@ -66,6 +66,42 @@ async function byRef(page: Page, ref: string) {
   return locator;
 }
 
+/** How long the network must stay quiet after an action before the page counts as settled. */
+const QUIET_MS = 300;
+/** Upper bound on that wait, so polling, long-polling or streaming requests can't hang a tool call. */
+const SETTLE_LIMIT_MS = 10_000;
+
+/**
+ * Run an action, then wait until the requests it started have finished and the network has
+ * been quiet for QUIET_MS. waitForLoadState() alone only covers full page loads: single-page
+ * apps (React Router, Inertia, ...) navigate by fetching data and re-rendering in place, so
+ * without this the snapshot would still show the page the action started from.
+ */
+async function settleAfter(page: Page, action: () => Promise<void>): Promise<void> {
+  const context = page.context(); // context-wide, so requests from popups count too
+  const inFlight = new Set<unknown>();
+  const started = (request: unknown) => inFlight.add(request);
+  const ended = (request: unknown) => inFlight.delete(request);
+  context.on('request', started);
+  context.on('requestfinished', ended);
+  context.on('requestfailed', ended);
+  try {
+    await action();
+    await page.waitForLoadState(); // a full navigation, if the action started one
+    const deadline = Date.now() + SETTLE_LIMIT_MS;
+    let quietSince = Date.now();
+    while (Date.now() < deadline) {
+      if (inFlight.size > 0) quietSince = Date.now();
+      else if (Date.now() - quietSince >= QUIET_MS) break;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  } finally {
+    context.off('request', started);
+    context.off('requestfinished', ended);
+    context.off('requestfailed', ended);
+  }
+}
+
 /**
  * Turn what the agent passed into a full URL. Full URLs are used as-is; paths like "/login"
  * are joined to the CURRENT base URL. Resolving here (instead of relying on the baseURL each
@@ -123,13 +159,14 @@ server.registerTool('browser_snapshot', {
 });
 
 server.registerTool('browser_click', {
-  description: 'Click an element as the given actor. Use a ref from the latest snapshot. Returns the new snapshot.',
+  description: 'Click an element as the given actor. Use a ref from the latest snapshot. Waits for any page load and for ' +
+    'requests the click starts (in-app navigation in single-page apps) to finish, then returns the new snapshot.',
   inputSchema: { actor, ref: z.string().describe('Element ref from the latest snapshot, e.g. "e5" or "f1e6"') },
 }, async ({ actor, ref }) => {
   try {
     const page = await currentPage(actor);
-    await (await byRef(page, ref)).click();
-    await page.waitForLoadState(); // if the click started a navigation, wait for the new page
+    const target = await byRef(page, ref);
+    await settleAfter(page, () => target.click()); // full page loads and in-app (fetch) navigation
     return text(await describe(actor, await currentPage(actor))); // re-read: the click may have opened a popup
   } catch (err) {
     return failure(err);
