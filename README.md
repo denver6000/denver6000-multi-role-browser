@@ -49,7 +49,7 @@ Every action takes an `actor`: any name you like. A new name starts as a fresh, 
 |---|---|
 | `browser_open` | Open a path (`/admin`) or full URL as an actor. Returns the HTTP status and a page snapshot. |
 | `browser_snapshot` | Show what the actor sees: an accessibility snapshot with element refs like `[ref=e5]`. |
-| `browser_click` | Click an element by ref. Returns the new snapshot. |
+| `browser_click` | Click an element by ref. Waits for page loads and for the requests the click starts (in-app navigation in single-page apps such as React Router or Inertia), then returns the new snapshot. |
 | `browser_fill` | Type into an input by ref. |
 | `browser_set_base_url` | Change which site paths point to, for all actors. |
 | `browser_actors` | List the base URL, the open actors and their tabs. |
