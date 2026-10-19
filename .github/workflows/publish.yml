@@ -29,6 +29,10 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
+      # `npm stage publish` (used below) needs a newer npm than some Node 24
+      # releases bundle, so pin the one it was tested with.
+      - run: npm install -g npm@11.17.0
+
       - run: npm ci
 
       # The tag is the release's claim about what is being published; if it
@@ -69,5 +73,10 @@ jobs:
 
       # No NPM_TOKEN: with a trusted publisher configured, the runner proves
       # its identity to the registry directly with a short-lived credential.
+      #
+      # Staged, not published: the trusted publisher is only allowed to stage,
+      # so a version goes live only after a maintainer approves it with 2FA
+      # (see RELEASING.md). A compromised workflow or a stray tag cannot put a
+      # version in front of users on its own.
       - if: steps.published.outputs.already == 'false'
-        run: npm publish --provenance
+        run: npm stage publish --provenance
