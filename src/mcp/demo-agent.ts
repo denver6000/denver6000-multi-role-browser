@@ -7,6 +7,8 @@
 // Run (with the dummy site running):  npm run demo:agent
 // Add --visible to watch the browser windows.
 
+import os from 'node:os';
+import path from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
@@ -24,7 +26,7 @@ await client.connect(transport);
 // 2. Discover the tools, just as an agent does before its first call.
 const { tools } = await client.listTools();
 console.log('Tools offered by the server:');
-for (const tool of tools) console.log(`  ${tool.name.padEnd(17)} ${tool.description}`);
+for (const tool of tools) console.log(`  ${tool.name.padEnd(19)} ${tool.description}`);
 
 /** Call a tool and return its text output. */
 async function call(name: string, args: Record<string, string> = {}): Promise<string> {
@@ -77,6 +79,16 @@ if (!profile.includes('heading "Profile of Uma User"')) {
   await client.close();
   throw new Error(`browser_click returned before the in-app navigation finished:\n${profile}`);
 }
+
+// A screenshot comes back as an image block the agent can look at, next to a short text block.
+const shotFile = path.join(os.tmpdir(), 'multi-role-browser-demo.png');
+const shot = await client.callTool({ name: 'browser_screenshot', arguments: { actor: 'user', path: shotFile } });
+const image = (shot.content as Array<{ type: string; data?: string; mimeType?: string }>).find(b => b.type === 'image');
+if (shot.isError || !image?.data || !Buffer.from(image.data, 'base64').subarray(1, 4).equals(Buffer.from('PNG'))) {
+  await client.close();
+  throw new Error(`browser_screenshot did not return a PNG image:\n${JSON.stringify(shot.content).slice(0, 500)}`);
+}
+console.log(`\nuser screenshot: ${image.mimeType}, ${Buffer.from(image.data, 'base64').length} bytes, saved to ${shotFile}`);
 
 // A mistake the agent can recover from: a stale ref comes back as an error result, not a crash.
 console.log('\nClicking a ref that does not exist:', await call('browser_click', { actor: 'user', ref: 'e999' }).catch(e => String(e)));
