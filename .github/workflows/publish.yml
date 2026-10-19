@@ -4,8 +4,7 @@ name: Release
 #
 # Authentication is npm trusted publishing (OIDC): no NPM_TOKEN secret, no
 # long-lived credential to leak, and provenance is attached automatically.
-# It requires a one-time setup on npmjs.com (see the Release section of the
-# README), and that setup can only be done once the package exists, so the
+# It requires a one-time setup on npmjs.com (see RELEASING.md), and that setup can only be done once the package exists, so the
 # first publish is done locally.
 on:
   push:
