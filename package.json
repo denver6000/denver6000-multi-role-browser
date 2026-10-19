@@ -1,6 +1,6 @@
 {
   "name": "multi-role-browser",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MCP server that lets AI agents drive several logged-in browser identities (admin, user, ...) side by side with Playwright",
   "keywords": [
     "mcp",
