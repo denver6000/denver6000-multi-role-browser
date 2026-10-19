@@ -3,28 +3,6 @@
   // Set breakpoints by clicking left of a line number. While paused, hover variables
   // or use the Debug Console to run code (e.g. `await page.title()`).
   "version": "0.2.0",
-  "inputs": [
-    {
-      "id": "path",
-      "type": "promptString",
-      "description": "Path to open on the backend",
-      "default": "/"
-    },
-    {
-      "id": "baseURL",
-      "type": "promptString",
-      "description": "Backend address",
-      "default": "http://localhost:3000"
-    }
-  ],
-  "compounds": [
-    {
-      // Starts the dummy site and index.ts together; stopping one stops both.
-      "name": "Dummy site + index.ts",
-      "configurations": ["Dummy site", "index.ts (visible browser)"],
-      "stopAll": true
-    }
-  ],
   "configurations": [
     {
       // The test website on http://localhost:3000. Breakpoints in dummy-site/server.ts work too.
@@ -34,38 +12,6 @@
       "program": "${workspaceFolder}/dummy-site/server.ts",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "name": "index.ts (visible browser)",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/index.ts",
-      "args": ["${input:path}"],
-      "env": { "BASE_URL": "${input:baseURL}" },
-      "console": "integratedTerminal",
-      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"]
-    },
-    {
-      "name": "index.ts (headless)",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/index.ts",
-      "args": ["${input:path}", "--headless"],
-      "env": { "BASE_URL": "${input:baseURL}" },
-      "console": "integratedTerminal",
-      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"]
-    },
-    {
-      // Opens the Playwright Inspector: every Playwright action pauses so you can step
-      // through them one at a time and see which element each one targets.
-      "name": "index.ts (Playwright Inspector)",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/index.ts",
-      "args": ["${input:path}"],
-      "env": { "BASE_URL": "${input:baseURL}", "PWDEBUG": "1" },
-      "console": "integratedTerminal",
-      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"]
     },
     {
       // Scripted stand-in for an AI agent: starts the MCP server and drives admin + user through it.
@@ -79,7 +25,7 @@
       "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"]
     },
     {
-      // Runs whichever .ts file is open in the editor, e.g. src/browser/browser.ts experiments.
+      // Runs whichever .ts file is open in the editor, e.g. a quick Playwright experiment.
       "name": "Current file",
       "type": "node",
       "request": "launch",
