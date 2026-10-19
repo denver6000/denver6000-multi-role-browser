@@ -34,9 +34,6 @@
   },
   "scripts": {
     "site": "node dummy-site/server.ts",
-    "start": "node index.ts",
-    "start:headless": "node index.ts --headless",
-    "debug": "node --inspect-brk index.ts",
     "mcp": "node src/mcp/server.ts",
     "demo:agent": "node src/mcp/demo-agent.ts",
     "typecheck": "tsc",
