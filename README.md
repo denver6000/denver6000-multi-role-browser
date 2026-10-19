@@ -1,5 +1,8 @@
 # multi-role-browser
 
+[![npm](https://img.shields.io/npm/v/multi-role-browser)](https://www.npmjs.com/package/multi-role-browser)
+[![license](https://img.shields.io/npm/l/multi-role-browser)](LICENSE)
+
 An MCP server that lets an AI agent (Claude Code, or any MCP client) drive **several logged-in browser identities at the same time**: an `admin` and a `user` side by side, for example. Each actor gets its own isolated Playwright browser context (separate cookies, storage and login), all sharing one Chromium.
 
 Use it to have an agent check that admins can do admin things, that regular users can't, and that what one role does shows up correctly for another.
@@ -72,35 +75,7 @@ npm run build         # compiles src/ to dist/ (what gets published)
 
 Node runs the `.ts` sources directly during development; `npm run build` is only needed for publishing.
 
-## Release
-
-The version lives only in `package.json`; the server reads it from there at startup.
-
-### First publish
-
-Trusted publishing cannot do a package's first release, because a trusted publisher is configured on a package that already exists. So the first release goes out from a workstation, and every release after that is automated. No access token is needed; npm authenticates in the browser:
-
-```bash
-npm logout          # clears any stored _authToken from ~/.npmrc
-npm login           # opens a browser
-npm whoami          # must print denver6000
-npm publish         # prepublishOnly type-checks and builds first
-```
-
-If your second factor is an authenticator app rather than a passkey, `npm publish --otp=123456` also works.
-
-### Then switch CI on (once)
-
-On npmjs.com, open the package > **Settings** > **Trusted Publisher** > **GitHub Actions**, and enter `denver6000`, `denver6000-multi-role-browser` (the repository, not the package name) and the workflow file name `publish.yml`.
-
-### Every release after that
-
-```bash
-npm version patch         # or minor / major: bumps package.json and creates the tag
-git push --follow-tags    # the tag starts .github/workflows/publish.yml
-```
-
-The workflow checks the tag matches `package.json`, type-checks, builds and publishes with provenance. A version that is already on npm (such as the one published by hand) is skipped instead of failing.
+Releases are published to npm from GitHub Actions; see [RELEASING.md](RELEASING.md).
 
 ## License
 
