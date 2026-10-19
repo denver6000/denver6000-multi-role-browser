@@ -54,6 +54,7 @@ Every action takes an `actor`: any name you like. A new name starts as a fresh, 
 | `browser_snapshot` | Show what the actor sees: an accessibility snapshot with element refs like `[ref=e5]`. |
 | `browser_click` | Click an element by ref. Waits for page loads and for the requests the click starts (in-app navigation in single-page apps such as React Router or Inertia), then returns the new snapshot. |
 | `browser_fill` | Type into an input by ref. |
+| `browser_screenshot` | Return a PNG of what the actor sees, for layout and styling the snapshot can't show. Captures the visible part of the page by default, the whole page with `fullPage`, or one element with `ref`. `path` also saves it to a file. |
 | `browser_set_base_url` | Change which site paths point to, for all actors. |
 | `browser_actors` | List the base URL, the open actors and their tabs. |
 | `browser_close` | Close an actor's browser context; using the name again starts fresh. |

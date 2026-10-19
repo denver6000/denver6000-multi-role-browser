@@ -9,6 +9,7 @@
 //   browser_open      -> returns a snapshot of the page, with element refs like [ref=e5]
 //   browser_click/fill on a ref -> returns the new snapshot
 //   ...repeat, reading each snapshot to decide the next step.
+//   browser_screenshot -> an image of the page, for what the text snapshot can't show (layout, styling)
 //
 // IMPORTANT: stdout is the protocol channel. Never console.log() here; it would corrupt
 // the messages. Use console.error() for debug output; it goes to stderr instead.
@@ -17,6 +18,7 @@
 // HEADLESS=1 to hide the windows.
 
 import fs from 'node:fs';
+import nodePath from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
@@ -111,7 +113,7 @@ function resolveUrl(url: string): string {
   return new URL(url, registry.getSettings().baseURL).href;
 }
 
-/** MCP tool results are a list of content blocks; we only return text. */
+/** MCP tool results are a list of content blocks; most tools only return text. */
 function text(value: string) {
   return { content: [{ type: 'text' as const, text: value }] };
 }
@@ -185,6 +187,36 @@ server.registerTool('browser_fill', {
     const page = await currentPage(actor);
     await (await byRef(page, ref)).fill(value);
     return text(`Filled ${ref}.\n${await describe(actor, page)}`);
+  } catch (err) {
+    return failure(err);
+  }
+});
+
+server.registerTool('browser_screenshot', {
+  description: 'Take a PNG screenshot of what the actor sees, to check layout, styling, images, charts or anything else ' +
+    'the text snapshot does not show. Captures the visible part of the page by default; pass ref for a single element ' +
+    'or fullPage for the whole scrollable page. Use browser_snapshot, not this, to find refs to click.',
+  inputSchema: {
+    actor,
+    ref: z.string().optional().describe('Only capture this element, e.g. "e5". Use a ref from the latest snapshot.'),
+    fullPage: z.boolean().optional().describe('Capture the whole scrollable page instead of only the visible part. Ignored when ref is given.'),
+    path: z.string().optional().describe('Also save the PNG to this file, e.g. "screenshots/admin-dashboard.png". ' +
+      'Relative paths are relative to the server\'s working directory; missing folders are created.'),
+  },
+}, async ({ actor, ref, fullPage, path }) => {
+  try {
+    const page = await currentPage(actor);
+    const file = path && nodePath.resolve(path);
+    const png = ref
+      ? await (await byRef(page, ref)).screenshot({ path: file })
+      : await page.screenshot({ path: file, fullPage });
+    const what = ref ? `element ${ref}` : fullPage ? 'full page' : 'visible part of the page';
+    return {
+      content: [
+        { type: 'text' as const, text: `Actor: ${actor}\nURL: ${page.url()}\nScreenshot of the ${what}` + (file ? `, saved to ${file}` : '') },
+        { type: 'image' as const, data: png.toString('base64'), mimeType: 'image/png' },
+      ],
+    };
   } catch (err) {
     return failure(err);
   }
